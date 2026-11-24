@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -7,35 +8,51 @@ pipeline {
     }
 
     stages {
+
         stage('1. Checkout Code') {
             steps {
                 checkout scm
+                echo 'Source code checked out successfully'
             }
         }
 
         stage('2. Application Build & Test') {
             steps {
-                bat 'C:\\Users\\VVCE\\AppData\\Local\\Programs\\Python\\Python311\\python.exe -m py_compile app.py'
+                sh 'python3 --version'
+                sh 'python3 -m py_compile app.py'
+                echo 'Application build and test successful'
             }
         }
 
         stage('3. Build & Tag Docker Image') {
             steps {
-                bat "docker build -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} -t ${REGISTRY}/${IMAGE_NAME}:latest ."
+                sh 'docker --version'
+                sh """
+                    docker build \
+                    -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} \
+                    -t ${REGISTRY}/${IMAGE_NAME}:latest .
+                """
+                echo 'Docker image built and tagged successfully'
             }
         }
 
         stage('4. Push Image to Registry') {
             steps {
-                bat "docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
-                bat "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
+                sh "docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
+                echo 'Docker images pushed successfully'
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline succeeded! Image ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} is available locally and in the registry."
+            echo "Pipeline succeeded!"
+            echo "Image: ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+        }
+
+        failure {
+            echo 'Pipeline failed. Check Console Output for details.'
         }
     }
 }
